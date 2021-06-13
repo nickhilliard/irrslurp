@@ -110,9 +110,10 @@ sub createtransfertrie {
 		next unless ($transfer->{$prefixafi});
 
 		my @subnets;
-		# LACNIC uses ISO8601 + milliseconds
-		if ($self->{rir} eq 'lacnic' && $transfer->{transfer_date} =~ /(\d+-\d+-\d+T\d+:\d+:\d+)\.\d+(.*)/) {
-			$transfer->{transfer_date} = $1.$2;
+		# LACNIC uses ISO8601 + 3-digit milliseconds, local TZ and no H:M separator in the specified TZ.
+		# standard ISO8601 in UTC would have been really helpful here.
+		if ($self->{rir} eq 'lacnic' && $transfer->{transfer_date} =~ /(\d+-\d+-\d+T\d+:\d+:\d+)\.\d+(.*)(\d{2})(\d{2})/) {
+			$transfer->{transfer_date} = $1.$2.$3.":".$4;
 		}
 		my $dt = DateTime::Format::ISO8601->parse_datetime($transfer->{transfer_date});
 		my $epochtime = $dt->epoch;
