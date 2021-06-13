@@ -18,8 +18,8 @@ Usage
 
 ```
 % perl Makefile.PL && make
-% perl -I blib bin/bogonsearch.pl --debug info > ipv4-bogons.json
-% perl -I blib bin/bogonsearch.pl --debug info --protocol 6 > ipv6-bogons.json
+% perl -I blib bin/bogonsearch.pl --debug info > ipv4-invalids.json
+% perl -I blib bin/bogonsearch.pl --debug info --protocol 6 > ipv6-invalids.json
 ```
 
 The invalid prefixes are emitted in json format on stdout.  These can be parsed on the
