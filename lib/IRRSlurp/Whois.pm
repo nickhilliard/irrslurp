@@ -81,9 +81,11 @@ sub createwhoishash {
 
 	local $/ = "";
 
+	my $recordtype = $self->{options}->{protocol} == 6 ? "route6" : "route";
+
 	open (INPUT, "gunzip<".$self->{mirror}->{whois_nonauth}->{filename}."|");
 	while (<INPUT>) {
-		next unless (/route:\s+(\S+)/);
+		next unless (/$recordtype:\s+(\S+)/);
 		my $prefix = $1;
 
 		my $timestamp = 0;

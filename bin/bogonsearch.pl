@@ -38,18 +38,20 @@ use Getopt::Long;
 use JSON;
 
 my $debug;
+my $protocol = 4;
 
 GetOptions(
 	'debug=s'	=> \$debug,
+	'protocol=i'	=> \$protocol,
 );
 
-my $ripewhois = new IRRSlurp::Whois (rirname => 'ripencc', debug => $debug);
+my $ripewhois = new IRRSlurp::Whois (rirname => 'ripencc', debug => $debug, protocol => $protocol);
 my $hash = \$ripewhois->{hash}->{whois_nonauth};
 
 my $invalids;
 
 foreach my $rirname (qw (arin lacnic afrinic apnic)) {
-	my $stats = new IRRSlurp::Stats (rirname => $rirname, debug => $debug);
+	my $stats = new IRRSlurp::Stats (rirname => $rirname, debug => $debug, protocol => $protocol);
 
 	$ripewhois->{log}->debug ("searching $rirname for invalid NONAUTH objects");
 

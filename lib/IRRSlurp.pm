@@ -69,7 +69,7 @@ our $rirdata = {
 
 sub new {
 	my ($class, %options) = @_;
-	my @tags = qw (debug cachedir rirname);
+	my @tags = qw (debug cachedir rirname protocol);
 
 	my $self;
 

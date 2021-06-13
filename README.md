@@ -18,10 +18,11 @@ Usage
 
 ```
 % perl Makefile.PL && make
-% perl -I blib bin/bogonsearch.pl --debug info
+% perl -I blib bin/bogonsearch.pl --debug info > ipv4-bogons.json
+% perl -I blib bin/bogonsearch.pl --debug info --protocol 6 > ipv6-bogons.json
 ```
 
-The invalid prefixes are emitted in json format.  These can be parsed on the
+The invalid prefixes are emitted in json format on stdout.  These can be parsed on the
 command-line using gron[1] or jq[2], or fed into another json consumer.
 
 All debugging information is emitted on stderr.
@@ -41,8 +42,6 @@ Bugs
 
   - doesn't handle merger/acquisitions unless the RIR specifies this in the
     transfers json blob.
-
-  - doesn't handle ipv6.
 
 [1] https://github.com/tomnomnom/gron
 [2] https://stedolan.github.io/jq/

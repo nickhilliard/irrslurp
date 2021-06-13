@@ -86,7 +86,15 @@ sub get_delegated_filename {
 sub createtransfertrie {
 	my ($self) = @_;
 
-	my $pt = new Net::Patricia;
+	my ($pt, $prefixafi);
+	if ($self->{options}->{protocol} == 6) {
+		$pt = new Net::Patricia AF_INET6;
+		$prefixafi = "ip6nets";
+	} else {
+		$pt = new Net::Patricia;
+		$prefixafi = "ip4nets";
+	}
+
 	my $transferblob = ${$self->slurp_json($self->{mirror}->{transfers}->{filename})};
 
 	my $reccount = 0;
@@ -99,7 +107,7 @@ sub createtransfertrie {
 		next if ($transfer->{type} eq "MERGER_ACQUISITION");
 
 		# only ipv4 for the moment
-		next unless ($transfer->{ip4nets});
+		next unless ($transfer->{$prefixafi});
 
 		my @subnets;
 		# LACNIC uses ISO8601 + milliseconds
@@ -110,7 +118,7 @@ sub createtransfertrie {
 		my $epochtime = $dt->epoch;
 
 		# lacnic put transfers sets into an array
-		my $set = $self->{rir} eq 'lacnic' ? $transfer->{ip4nets}[0]->{transfer_set} : $transfer->{ip4nets}->{transfer_set};
+		my $set = $self->{rir} eq 'lacnic' ? $transfer->{$prefixafi}[0]->{transfer_set} : $transfer->{$prefixafi}->{transfer_set};
 		
 		foreach my $transfernet (@{$set}) {
 
@@ -144,7 +152,14 @@ sub createtransfertrie {
 sub createdelegatedtrie {
 	my ($self) = @_;
 
-	my $pt = new Net::Patricia;
+	my ($pt, $prefixafi);
+	if ($self->{options}->{protocol} == 6) {
+		$pt = new Net::Patricia AF_INET6;
+		$prefixafi = "ipv6";
+	} else {
+		$pt = new Net::Patricia;
+		$prefixafi = "ipv4";
+	}
 
 	my $strp = DateTime::Format::Strptime->new(
 		pattern		=> '%Y%m%d',
@@ -160,12 +175,9 @@ sub createdelegatedtrie {
 		chomp;
 		my @fields = split(/\|/);
 
-		$self->{log}->is_debug() && $self->{log}->debug("parsing delegated file: fields: ".join(",", @fields));
-
 		next unless ($fields[0] eq $self->{rir});
 
-		# only ipv4 for the moment
-		next unless ($fields[2] eq 'ipv4');
+		next unless ($fields[2] eq $prefixafi);
 
 		next if (defined($fields[5]) && $fields[5] eq 'summary');
 
@@ -174,20 +186,31 @@ sub createdelegatedtrie {
 			or $fields[6] eq 'available'
 			or $fields[6] eq 'reserved');
 
+		$self->{log}->is_debug() && $self->{log}->debug("parsing delegated file: fields: ".join(",", @fields));
+
 		my @subnets;
-		my $timestamp = $fields[5] ? $fields[5] : '19800101';
+		my $timestamp = $fields[5] ? $fields[5] : '19800101';	 # randomly chosen early date from before there were allocations
 		my $dt = $strp->parse_datetime($timestamp);
 		my $epochtime = $dt->epoch;
 
-		my $ip = new Net::IP ($fields[3]." + ".($fields[4] - 1));
+		# ipv4 lists the number of IP addresses; ipv6 specifies the mask length
+		my $ipspec;
+		if ($self->{options}->{protocol} == 6) {
+			$ipspec = $fields[3]."/".$fields[4];
+		} else {
+			$ipspec = $fields[3]." + ".($fields[4] - 1);
+		}
+		my $ip = new Net::IP ($ipspec);
+
 		if ($ip->{is_prefix}) {
-			push (@subnets, $ip->prefix());
+			my $prefix = $self->{options}->{protocol} == 6 ? $ip->short()."/".$ip->prefixlen() : $ip->prefix();
+			push (@subnets, $prefix);
 		} else {
 			push (@subnets, $ip->find_prefixes());
 		}
 
-		$self->{log}->is_debug() && $self->{log}->debug("added to PT: subnets: ".join(",", @subnets).", timestamp: $epochtime");
 		foreach my $net (@subnets) {
+			$self->{log}->is_debug() && $self->{log}->debug("added to PT: subnet: $net, timestamp: $epochtime, status: $fields[6]");
 			my $userdata = {
 				prefix		=> $net,
 				timestamp	=> $epochtime,
