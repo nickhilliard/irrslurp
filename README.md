@@ -27,6 +27,32 @@ command-line using gron[1] or jq[2], or fed into another json consumer.
 
 All debugging information is emitted on stderr.
 
+Perl dependencies
+-----------------
+
+The perl library depends on several modules from CPAN. The `perl Makefile.PL`
+command will provide a list of which ones are missing.  These can be
+installed on Ubuntu / Macos using the following commands:
+
+Ubuntu:
+
+```
+# apt update
+# apt install -y git libnet-patricia-perl libdatetime-format-iso8601-perl libnet-ip-perl liblog-dispatch-perl libjson-perl liblwp-protocol-https-perl
+```
+
+Macos with Macports:
+
+```
+# port -N install git perl5 p5-datetime-format-iso8601 p5-json p5-log-dispatch p5-lwp-protocol-https p5-net-ip p5-net-patricia
+# port upgrade -s -n --force p5-net-patricia
+```
+
+The extra command for macos rebuilds the `p5-net-patricia` port from
+scratch.  This can be necessary if there is a misalignment in the operating
+system build environment.
+
+
 Bugs
 ----
 
