@@ -8,7 +8,7 @@ WriteMakefile(
 	PREREQ_PM       => {
 		LWP::UserAgent => 0,
 		JSON => 0,
-		Log::Any => 0,
+		Log::Dispatch => 0,
 		DateTime::Format::ISO8601 => 0,
 		Net::IP => 0,
 		Net::Patricia => 0,
