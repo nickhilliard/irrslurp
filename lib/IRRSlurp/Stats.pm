@@ -62,10 +62,10 @@ sub new {
 sub refreshcache {
         my ($self) = @_;
 
-	$self->{log}->info('retrieving transfers', {rir => $self->{options}->{rirname}});
+	$self->{log}->info('retrieving transfers, rir: '.$self->{options}->{rirname});
 	$self->filemirror($self->get_transfers_filename(), 'transfers');
 
-	$self->{log}->info('retrieving delegated', {rir => $self->{options}->{rirname}});
+	$self->{log}->info('retrieving delegated, rir: '.$self->{options}->{rirname});
 	$self->filemirror($self->get_delegated_filename(), 'delegated');
 }
 
@@ -92,7 +92,7 @@ sub createtransfertrie {
 	my $reccount = 0;
 	my $cidrcount = 0;
 
-        $self->{log}->info('started parsing transfer trie '.$self->{mirror}->{transfers}->{filename});
+        $self->{log}->info('started parsing transfer trie for filename: '.$self->{mirror}->{transfers}->{filename});
 
 	foreach my $transfer (@{$transferblob->{transfers}}) {
 		# not interested in mergers
@@ -114,7 +114,7 @@ sub createtransfertrie {
 		
 		foreach my $transfernet (@{$set}) {
 
-			$self->{log}->is_debug() && $self->{log}->debug("parsing: ", {start_address => $transfernet->{start_address}, end_address => $transfernet->{end_address}, timestamp => $epochtime});
+			$self->{log}->is_debug() && $self->{log}->debug("parsing: start_address: $transfernet->{start_address}, end_address: $transfernet->{end_address}, timestamp: $epochtime");
 			my $ip = new Net::IP ($transfernet->{start_address}." - ".$transfernet->{end_address});
 			# this may be a non-contiguous range. If so, Net::IP::is_prefix will be set to 0
 			if ($ip->{is_prefix}) {
@@ -124,7 +124,7 @@ sub createtransfertrie {
 			}
 		}			
 
-		$self->{log}->is_trace() && $self->{log}->trace("added to PT:", {subnets => \@subnets, timestamp => $epochtime});
+		$self->{log}->is_debug() && $self->{log}->debug("added to PT: subnets: ".join(",", @subnets).", timestamp: $epochtime");
 		foreach my $net (@subnets) {
 			my $userdata = {
 				prefix		=> $net,
@@ -136,7 +136,7 @@ sub createtransfertrie {
 		$cidrcount += $#subnets + 1;
 	}
 
-	$self->{log}->info('ended parsing transfer trie '.$self->{mirror}->{transfers}->{filename}, { records => $reccount, cidrprefixes => $cidrcount});
+	$self->{log}->info('ended parsing transfer trie for filename: '.$self->{mirror}->{transfers}->{filename}.", records: $reccount, cidrprefixes: $cidrcount");
 
 	$self->{tries}->{transfers} = $pt;
 }
@@ -154,13 +154,13 @@ sub createdelegatedtrie {
 	my $reccount = 0;
 	my $cidrcount = 0;
 
-	$self->{log}->info('started parsing delegated trie '.$self->{mirror}->{delegated}->{filename});
+	$self->{log}->info('started parsing delegated trie for filename: '.$self->{mirror}->{delegated}->{filename});
 	open (INPUT, $self->{mirror}->{delegated}->{filename});
 	while (<INPUT>) {
 		chomp;
 		my @fields = split(/\|/);
 
-		$self->{log}->is_trace() && $self->{log}->trace("parsing delegated file:", {fields => \@fields});
+		$self->{log}->is_debug() && $self->{log}->debug("parsing delegated file: fields: ".join(",", @fields));
 
 		next unless ($fields[0] eq $self->{rir});
 
@@ -186,7 +186,7 @@ sub createdelegatedtrie {
 			push (@subnets, $ip->find_prefixes());
 		}
 
-		$self->{log}->is_trace() && $self->{log}->trace("added to PT:", {subnets => \@subnets, timestamp => $epochtime});
+		$self->{log}->is_debug() && $self->{log}->debug("added to PT: subnets: ".join(",", @subnets).", timestamp: $epochtime");
 		foreach my $net (@subnets) {
 			my $userdata = {
 				prefix		=> $net,
@@ -200,7 +200,7 @@ sub createdelegatedtrie {
 	}
 	close (INPUT);
 
-	$self->{log}->info('ended parsing delegated trie '.$self->{mirror}->{delegated}->{filename}, { records => $reccount, cidrprefixes => $cidrcount});
+	$self->{log}->info("ended parsing delegated trie for filename: $self->{mirror}->{delegated}->{filename}, records: $reccount, cidrprefixes => $cidrcount");
 
 	$self->{tries}->{delegated} = $pt;
 }

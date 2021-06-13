@@ -61,7 +61,7 @@ sub new {
 sub refreshcache {
         my ($self) = @_;
 
-	$self->{log}->info('retrieving transfers', {rir => $self->{options}->{rirname}});
+	$self->{log}->info("retrieving transfers, rir: $self->{options}->{rirname}");
 	$self->filemirror($self->get_whois_nonauth_filename(), 'whois_nonauth');
 }
 
@@ -77,7 +77,7 @@ sub createwhoishash {
 	
 	my $hash;
 
-	$self->{log}->info('started parsing whois hash '.$self->{mirror}->{whois_nonauth}->{filename});
+	$self->{log}->info('started parsing whois info contained in: '.$self->{mirror}->{whois_nonauth}->{filename});
 
 	local $/ = "";
 
@@ -103,11 +103,12 @@ sub createwhoishash {
 			timestamp => $timestamp,
 		};
 
-		$self->{log}->is_trace() && $self->{log}->trace("added to hash:", {key => $key, hash => $hash->{$key}});
+		# XXX stringify
+		$self->{log}->is_debug() && $self->{log}->debug("added to hash: key: $key, hash: => $hash->{$key}");
 	}
 	close (INPUT);
 
-	$self->{log}->info('ended parsing whois hash '.$self->{mirror}->{whois_nonauth}->{filename});
+	$self->{log}->info('ended parsing whois info contained in: '.$self->{mirror}->{whois_nonauth}->{filename});
 
 	$self->{hash}->{whois_nonauth} = $hash;
 }

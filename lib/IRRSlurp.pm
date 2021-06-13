@@ -33,10 +33,13 @@ package IRRSlurp;
 use strict;
 
 use Data::Dumper;
+
 use LWP::UserAgent;
 use JSON;
-use Log::Any;
+use Log::Dispatch;
 use DateTime::Format::ISO8601;
+use File::Basename;
+use POSIX qw(strftime);
 
 use vars qw(@ISA @EXPORT_OK @EXPORT $VERSION $AUTOLOAD);
 
@@ -66,21 +69,43 @@ our $rirdata = {
 
 sub new {
 	my ($class, %options) = @_;
+	my @tags = qw (debug cachedir rirname);
 
 	my $self;
-	
-	$self->{log} = Log::Any->get_logger();
-	use Log::Any::Adapter ('Stderr', log_level => 'info' );
 
-	$self->{log}->info("instantiating ".__PACKAGE__." using parameters:", {progname => $0, pid => $$, perl_version => $], %options});
+	$self->{options}->{cachedir} = 'irrcache';
+	$self->{options}->{debug} = 'info';
+	foreach my $tag (@tags) {
+		$self->{options}->{$tag} = $options{$tag} if (defined $options{$tag});
+	}
+
+	my $log_callback = sub {
+		my %p = @_;
+
+		my $tz = strftime("%z", localtime(time()));
+		$tz =~ s/(\d{2})(\d{2})/$1:$2/;
+
+		my $msg = ""
+			.strftime("%Y-%m-%dT%H:%M:%S", localtime(time())).$tz
+			." [".basename($0)."] "
+			.uc($p{level}).": "
+			.$p{message};
+		return $msg;
+	};
+
+	$self->{log} = my $log = Log::Dispatch->new(
+		outputs => [
+			[ 'Screen', min_level => $self->{options}->{debug}, newline => 1 ],
+		],
+		callbacks => $log_callback,
+	);
+	$self->{log}->info("instantiating ".__PACKAGE__." using parameters: progname: $0, pid: $$, perl_version: $]");
 	
-	$self->{options} = \%options;
 	$self->{rirdata} = $rirdata;
 	$self->{rir} = $self->{options}->{rirname};
-	$self->{options}->{cachedir} = '/tmp/cache';
 
 	if (!defined ($rirdata->{$self->{rir}})) {
-		$self->{log}->error('rir not defined', {rir => $self->{options}->{rirname}});
+		$self->{log}->error("unknown/undefined rir: $self->{options}->{rirname}");
 		return undef;
 	}
 
@@ -109,7 +134,7 @@ sub filemirror {
 
 	my $ua  = LWP::UserAgent->new( timeout => 30 );
 
-	$self->{log}->info('mirroring', {url => $url, output => $filename});
+	$self->{log}->info("mirroring url: $url, output: $filename");
 	my $res = $ua->mirror($url, $filename);
 
 	if ($res->is_success) {
