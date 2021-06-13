@@ -34,15 +34,22 @@ use Data::Dumper;
 
 use IRRSlurp::Stats;
 use IRRSlurp::Whois;
+use Getopt::Long;
 use JSON;
 
-my $ripewhois = new IRRSlurp::Whois (rirname => 'ripencc');
+my $debug;
+
+GetOptions(
+	'debug=s'	=> \$debug,
+);
+
+my $ripewhois = new IRRSlurp::Whois (rirname => 'ripencc', debug => $debug);
 my $hash = \$ripewhois->{hash}->{whois_nonauth};
 
 my $invalids;
 
 foreach my $rirname (qw (arin lacnic afrinic apnic)) {
-	my $stats = new IRRSlurp::Stats (rirname => $rirname);
+	my $stats = new IRRSlurp::Stats (rirname => $rirname, debug => $debug);
 
 	$ripewhois->{log}->debug ("searching $rirname for invalid NONAUTH objects");
 

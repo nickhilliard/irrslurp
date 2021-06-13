@@ -74,7 +74,7 @@ sub new {
 	my $self;
 
 	$self->{options}->{cachedir} = 'irrcache';
-	$self->{options}->{debug} = 'info';
+	$self->{options}->{debug} = 'warning';
 	foreach my $tag (@tags) {
 		$self->{options}->{$tag} = $options{$tag} if (defined $options{$tag});
 	}
@@ -143,7 +143,7 @@ sub filemirror {
 		if ($res->code == 304) {	# not modified
 			$self->{mirror}->{$type}->{lastmodified} = (stat ($filename))[9];
 		} else {
-			$self->{log}->info('mirror process failed');
+			$self->{log}->warning('mirror process failed');
 			die $res->status_line;
 		}
 	}
@@ -166,7 +166,7 @@ sub make_cache_dir {
 sub slurp_json {
         my ($self, $filename) = @_;
 
-	open (my $fh, "<:encoding(UTF-8)", $filename) || die("Can't open \$filename\": $!\n");
+	open (my $fh, "<:encoding(UTF-8)", $filename) || ($self->{log}->warning("Can't open \$filename\": $!") && die );
 	local $/ = undef;
 	my $json_input = <$fh>;
 	close ($fh);
