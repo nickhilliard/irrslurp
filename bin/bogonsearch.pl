@@ -37,25 +37,41 @@ use IRRSlurp::Whois;
 use Getopt::Long;
 use JSON;
 
+my @authsource;
+my $checkregstatus = 1;
+my $checkregtime = 1;
 my $debug;
 my $protocol = 4;
+my @rirs;
 
 GetOptions(
-	'debug=s'	=> \$debug,
-	'protocol=i'	=> \$protocol,
+	'authsource=s@'		=> \@authsource,
+	'checkregstatus!'	=> \$checkregstatus,
+	'checkregtime!'		=> \$checkregtime,
+	'debug=s'		=> \$debug,
+	'protocol=i'		=> \$protocol,
+	'rirs=s@'		=> \@rirs,
 );
+
+if ($#authsource == -1) {
+	@authsource = qw (transfers delegated);
+}
+
+if ($#rirs == -1) {
+	@rirs = qw (afrinic apnic arin lacnic);
+}
 
 my $ripewhois = new IRRSlurp::Whois (rirname => 'ripencc', debug => $debug, protocol => $protocol);
 my $hash = \$ripewhois->{hash}->{whois_nonauth};
 
 my $invalids;
 
-foreach my $rirname (qw (arin lacnic afrinic apnic)) {
+foreach my $rirname (@rirs) {
 	my $stats = new IRRSlurp::Stats (rirname => $rirname, debug => $debug, protocol => $protocol);
 
 	$ripewhois->{log}->debug ("searching $rirname for invalid NONAUTH objects");
 
-	foreach my $trietype (qw (transfers delegated)) {
+	foreach my $trietype (@authsource) {
 		my $pt = $stats->{tries}->{$trietype};
 
 		foreach my $route (keys %{$$hash}) {
@@ -75,8 +91,8 @@ foreach my $rirname (qw (arin lacnic afrinic apnic)) {
 			# 2. the RIR delegated status is 'reserved' or 'available'
 
 			next unless (
-				($reregtime > $nonauthtime)
-				|| ( $trietype eq 'delegated' && defined ($data->{status}) && ($data->{status} eq 'reserved' || $data->{status} eq 'available') )
+				( $checkregtime && $reregtime > $nonauthtime )
+				|| ( $checkregstatus && $trietype eq 'delegated' && defined ($data->{status}) && ($data->{status} eq 'reserved' || $data->{status} eq 'available') )
 			);
 
 			my $tracedata = {

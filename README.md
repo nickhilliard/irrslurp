@@ -18,14 +18,44 @@ Usage
 
 ```
 % perl Makefile.PL && make
-% perl -I blib bin/bogonsearch.pl --debug info > ipv4-invalids.json
-% perl -I blib bin/bogonsearch.pl --debug info --protocol 6 > ipv6-invalids.json
+% perl -I lib bin/bogonsearch.pl --debug info > ipv4-invalids.json
+% perl -I lib bin/bogonsearch.pl --debug info --protocol 6 > ipv6-invalids.json
 ```
 
 The invalid prefixes are emitted in json format on stdout.  These can be parsed on the
 command-line using gron[1] or jq[2], or fed into another json consumer.
 
 All debugging information is emitted on stderr.
+
+```
+    --authsource [delegated|transfers]			# check delegated files, or transfer files. defaults to both
+    --[no]checkregstatus				# invalidate objects based on delegated registration status
+    --[no]checkregtime					# invalidate objects based on time-based status transfer check
+    --debug [error|warning|notice|info|debug]		# set minimum level for logging output
+    --protocol [4|6]					# specify the protocol to check
+    --rirs <rirname> [--rirs <rirname> ...]		# list of RIRs to check. defaults to: afrinic apnic arin lacnic
+```
+
+Examples
+--------
+
+1. Check database for reserved and unregistered address space in LACNIC and
+Afrinic only. Check delegated files only.  Check IPv4 only.  Reasonable
+debugging output.
+
+```
+% perl -I lib bin/bogonsearch.pl --debug info --protocol 4 --no-checkregtime --authsource delegated --rirs lacnic --rirs afrinic
+```
+
+2. Check all RIRs database for transfers only, ipv6:
+
+```
+% perl -I lib bin/bogonsearch.pl --protocol 6 --nocheckregstatus --authsource transfers
+```
+
+The output of this is "null", indicating no whois objects could be viewed as
+invalid on the basis that the ipv6 address space was transferred to another
+party.
 
 Perl dependencies
 -----------------
