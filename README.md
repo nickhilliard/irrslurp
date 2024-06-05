@@ -10,8 +10,8 @@ This code carefully mirrors:
 then runs a patricia trie search to assess which prefixes in the RIPE nonauth
 db are invalid.  The code lists a prefix as being invalid if the route entry
 refers to unallocated or reserved address space, or if the route entry was
-part, or all, of a network block wwhich was subsequently transferred to
-another organisation.
+part, or all, of a network block which was subsequently the subject of a RIR
+or inter-RIR transfer.
 
 Usage
 -----
