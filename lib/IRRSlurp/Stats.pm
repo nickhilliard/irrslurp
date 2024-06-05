@@ -112,8 +112,8 @@ sub createtransfertrie {
 		my @subnets;
 		# LACNIC uses ISO8601 + 3-digit milliseconds, local TZ and no H:M separator in the specified TZ.
 		# standard ISO8601 in UTC would have been really helpful here.
-		if ($self->{rir} eq 'lacnic' && $transfer->{transfer_date} =~ /(\d+-\d+-\d+T\d+:\d+:\d+)\.\d+(.*)(\d{2})(\d{2})/) {
-			$transfer->{transfer_date} = $1.$2.$3.":".$4;
+		if ($self->{rir} eq 'lacnic' && $transfer->{transfer_date} =~ /(\d+-\d+-\d+)[\sT](\d+:\d+:\d+)\.\d+(.*)(\d{2})(\d{2})/) {
+			$transfer->{transfer_date} = $1."T".$2.$3.$4.":".$5;
 		}
 		my $dt = DateTime::Format::ISO8601->parse_datetime($transfer->{transfer_date});
 		my $epochtime = $dt->epoch;
